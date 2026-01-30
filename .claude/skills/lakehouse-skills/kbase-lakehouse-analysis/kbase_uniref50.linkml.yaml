@@ -1,0 +1,70 @@
+id: https://w3id.org/kbase/kbase_uniref50
+name: kbase_uniref50
+prefixes:
+  linkml: https://w3id.org/linkml/
+  kbase: https://w3id.org/kbase/kbase_uniref50/
+default_range: string
+imports:
+- linkml:types
+classes:
+  Cluster:
+    attributes:
+      cluster_id:
+        range: string
+        identifier: true
+      name:
+        range: string
+      entity_type:
+        range: string
+      description:
+        range: string
+      protocol_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: cluster
+  Clustermember:
+    attributes:
+      cluster_id:
+        range: string
+        identifier: false
+      entity_id:
+        range: string
+        identifier: false
+      is_representative:
+        range: string
+      is_seed:
+        range: string
+      score:
+        range: string
+    annotations:
+      source_table: clustermember
+  Crossreference:
+    attributes:
+      entity_id:
+        range: string
+        identifier: false
+      xref_type:
+        range: string
+      xref_value:
+        range: string
+    annotations:
+      source_table: crossreference
+  Entity:
+    attributes:
+      entity_id:
+        range: string
+        identifier: true
+      data_source_entity_id:
+        range: string
+        identifier: false
+      entity_type:
+        range: string
+      data_source:
+        range: string
+      updated:
+        range: string
+      created:
+        range: string
+    annotations:
+      source_table: entity

@@ -1,0 +1,106 @@
+id: https://w3id.org/kbase/kbase_uniprot_bacteria
+name: kbase_uniprot_bacteria
+prefixes:
+  linkml: https://w3id.org/linkml/
+  kbase: https://w3id.org/kbase/kbase_uniprot_bacteria/
+default_range: string
+imports:
+- linkml:types
+classes:
+  UniprotDbAssociationsDelta:
+    attributes:
+      subject:
+        range: string
+      object:
+        range: string
+      predicate:
+        range: string
+      evidence_type:
+        range: string
+      supporting_objects:
+        range: string
+      publications:
+        range: string
+    annotations:
+      source_table: uniprot_db_associations_delta
+  UniprotDbEntitiesDelta:
+    attributes:
+      entity_id:
+        range: string
+        identifier: false
+      entity_type:
+        range: string
+      data_source:
+        range: string
+      created:
+        range: string
+      updated:
+        range: string
+      version:
+        range: string
+      uniprot_created:
+        range: string
+      uniprot_modified:
+        range: string
+    annotations:
+      source_table: uniprot_db_entities_delta
+  UniprotDbIdentifiersDelta:
+    attributes:
+      entity_id:
+        range: string
+        identifier: false
+      identifier:
+        range: string
+      source:
+        range: string
+      description:
+        range: string
+    annotations:
+      source_table: uniprot_db_identifiers_delta
+  UniprotDbNamesDelta:
+    attributes:
+      entity_id:
+        range: string
+        identifier: false
+      name:
+        range: string
+      description:
+        range: string
+      source:
+        range: string
+    annotations:
+      source_table: uniprot_db_names_delta
+  UniprotDbProteinsDelta:
+    attributes:
+      protein_id:
+        range: string
+        identifier: false
+      ec_numbers:
+        range: string
+      evidence_for_existence:
+        range: string
+      length:
+        range: string
+      mass:
+        range: string
+      checksum:
+        range: string
+      modified:
+        range: string
+      sequence_version:
+        range: string
+      sequence:
+        range: string
+      entry_modified:
+        range: string
+    annotations:
+      source_table: uniprot_db_proteins_delta
+  UniprotDbPublicationsDelta:
+    attributes:
+      entity_id:
+        range: string
+        identifier: false
+      publication:
+        range: string
+    annotations:
+      source_table: uniprot_db_publications_delta

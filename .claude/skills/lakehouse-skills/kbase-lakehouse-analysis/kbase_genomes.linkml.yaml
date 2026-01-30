@@ -1,0 +1,210 @@
+id: https://w3id.org/kbase/kbase_genomes
+name: kbase_genomes
+prefixes:
+  linkml: https://w3id.org/linkml/
+  kbase: https://w3id.org/kbase/kbase_genomes/
+default_range: string
+imports:
+- linkml:types
+classes:
+  Contig:
+    attributes:
+      contig_id:
+        range: string
+        identifier: true
+      hash:
+        range: string
+      gc_content:
+        range: string
+      length:
+        range: string
+    annotations:
+      source_table: contig
+  ContigCollection:
+    attributes:
+      contig_collection_id:
+        range: string
+        identifier: true
+      hash:
+        range: string
+      contig_bp:
+        range: string
+      ncbi_taxon_id:
+        range: string
+        identifier: false
+      gtdb_taxon_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: contig_collection
+  ContigXContigCollection:
+    attributes:
+      contig_id:
+        range: string
+        identifier: false
+      contig_collection_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: contig_x_contig_collection
+  Feature:
+    attributes:
+      feature_id:
+        range: string
+        identifier: true
+      hash:
+        range: string
+      cds_phase:
+        range: string
+      e_value:
+        range: string
+      p_value:
+        range: string
+      start:
+        range: string
+      end:
+        range: string
+      strand:
+        range: string
+      source_database:
+        range: string
+      protocol_id:
+        range: string
+        identifier: false
+      type:
+        range: string
+    annotations:
+      source_table: feature
+  ContigCollectionXEncodedFeature:
+    attributes:
+      contig_collection_id:
+        range: string
+        identifier: false
+      encoded_feature_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: contig_collection_x_encoded_feature
+  ContigCollectionXFeature:
+    attributes:
+      contig_collection_id:
+        range: string
+        identifier: false
+      feature_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: contig_collection_x_feature
+  ContigXFeature:
+    attributes:
+      contig_id:
+        range: string
+        identifier: false
+      feature_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: contig_x_feature
+  ContigXEncodedFeature:
+    attributes:
+      contig_id:
+        range: string
+        identifier: false
+      encoded_feature_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: contig_x_encoded_feature
+  EncodedFeatureXFeature:
+    attributes:
+      encoded_feature_id:
+        range: string
+        identifier: false
+      feature_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: encoded_feature_x_feature
+  ContigXProtein:
+    attributes:
+      contig_id:
+        range: string
+        identifier: false
+      protein_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: contig_x_protein
+  ContigCollectionXProtein:
+    attributes:
+      contig_collection_id:
+        range: string
+        identifier: false
+      protein_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: contig_collection_x_protein
+  FeatureXProtein:
+    attributes:
+      feature_id:
+        range: string
+        identifier: false
+      protein_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: feature_x_protein
+  EncodedFeatureXProtein:
+    attributes:
+      encoded_feature_id:
+        range: string
+        identifier: false
+      protein_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: encoded_feature_x_protein
+  EncodedFeature:
+    attributes:
+      encoded_feature_id:
+        range: string
+        identifier: true
+      hash:
+        range: string
+      has_stop_codon:
+        range: string
+      type:
+        range: string
+    annotations:
+      source_table: encoded_feature
+  Name:
+    attributes:
+      entity_id:
+        range: string
+        identifier: false
+      name:
+        range: string
+      description:
+        range: string
+      source:
+        range: string
+    annotations:
+      source_table: name
+  Protein:
+    attributes:
+      protein_id:
+        range: string
+        identifier: true
+      hash:
+        range: string
+      description:
+        range: string
+      evidence_for_existence:
+        range: string
+      length:
+        range: string
+      sequence:
+        range: string
+    annotations:
+      source_table: protein

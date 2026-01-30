@@ -1,0 +1,87 @@
+id: https://w3id.org/kbase/kbase_msd_biochemistry
+name: kbase_msd_biochemistry
+prefixes:
+  linkml: https://w3id.org/linkml/
+  kbase: https://w3id.org/kbase/kbase_msd_biochemistry/
+default_range: string
+imports:
+- linkml:types
+classes:
+  Molecule:
+    attributes:
+      abbreviation:
+        range: string
+      charge:
+        range: string
+      deltag:
+        range: string
+      deltagerr:
+        range: string
+      formula:
+        range: string
+      id:
+        range: string
+        identifier: true
+      inchikey:
+        range: string
+      mass:
+        range: string
+      name:
+        range: string
+      pka:
+        range: string
+      pkb:
+        range: string
+      smiles:
+        range: string
+      source:
+        range: string
+    annotations:
+      source_table: molecule
+  Reaction:
+    attributes:
+      abbreviation:
+        range: string
+      deltag:
+        range: string
+      deltagerr:
+        range: string
+      id:
+        range: string
+        identifier: true
+      is_transport:
+        range: string
+      name:
+        range: string
+      reversibility:
+        range: string
+      source:
+        range: string
+      status:
+        range: string
+    annotations:
+      source_table: reaction
+  Reagent:
+    attributes:
+      reaction_id:
+        range: string
+        identifier: false
+      molecule_id:
+        range: string
+        identifier: false
+      compartment_index:
+        range: string
+      stoichiometry:
+        range: string
+    annotations:
+      source_table: reagent
+  ReactionSimilarity:
+    attributes:
+      reaction_1:
+        range: string
+      reaction_2:
+        range: string
+      similarity:
+        range: string
+    annotations:
+      source_table: reaction_similarity

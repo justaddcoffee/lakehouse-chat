@@ -1,0 +1,256 @@
+id: https://w3id.org/kbase/kbase_ke_pangenome
+name: kbase_ke_pangenome
+title: KBase Pangenome Database
+description: >-
+  Pangenomic data organized around GTDB species clades. Contains gene clusters,
+  genome metadata, taxonomy, and functional annotations.
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  kbase: https://w3id.org/kbase/pangenome/
+  GTDB: https://gtdb.ecogenomic.org/
+  NCBI: https://www.ncbi.nlm.nih.gov/
+
+default_range: string
+imports:
+  - linkml:types
+
+classes:
+  GtdbSpeciesClade:
+    description: GTDB species-level grouping with representative genome
+    annotations:
+      source_table: gtdb_species_clade
+    attributes:
+      gtdb_species_clade_id:
+        identifier: true
+        description: Species clade ID (e.g., s__Klebsiella_pneumoniae--RS_GCF_000742135.1)
+      representative_genome_id:
+        description: Representative genome for this species clade
+        range: Genome
+      GTDB_species:
+        description: GTDB species name (e.g., s__Klebsiella_pneumoniae)
+      GTDB_taxonomy:
+        description: Full GTDB lineage string
+      ANI_circumscription_radius:
+        range: float
+        description: ANI threshold for species membership
+      mean_intra_species_ANI:
+        range: float
+      min_intra_species_ANI:
+        range: float
+      mean_intra_species_AF:
+        range: float
+      min_intra_species_AF:
+        range: float
+      no_clustered_genomes_unfiltered:
+        range: integer
+      no_clustered_genomes_filtered:
+        range: integer
+
+  Genome:
+    description: Individual genome assembly
+    annotations:
+      source_table: genome
+    attributes:
+      genome_id:
+        identifier: true
+        description: Genome accession (e.g., RS_GCF_000022685.1)
+      gtdb_species_clade_id:
+        range: GtdbSpeciesClade
+      gtdb_taxonomy_id:
+        description: GTDB taxonomy lineage string
+      ncbi_biosample_id:
+        description: NCBI BioSample accession
+      fna_file_path_nersc:
+        description: Path to nucleotide FASTA at NERSC
+      faa_file_path_nersc:
+        description: Path to protein FASTA at NERSC
+
+  Gene:
+    description: Gene/CDS within a genome
+    annotations:
+      source_table: gene
+      row_count: "1011650903"
+    attributes:
+      gene_id:
+        identifier: true
+        description: Gene ID (contig_CDS-number, e.g., NC_012808.1_2957)
+      genome_id:
+        range: Genome
+
+  GeneCluster:
+    description: Ortholog cluster at species level (core/auxiliary/singleton)
+    annotations:
+      source_table: gene_cluster
+      row_count: "132531501"
+    attributes:
+      gene_cluster_id:
+        identifier: true
+      gtdb_species_clade_id:
+        range: GtdbSpeciesClade
+      is_core:
+        range: boolean
+        description: Present in all genomes of species
+      is_auxiliary:
+        range: boolean
+        description: Present in some but not all genomes
+      is_singleton:
+        range: boolean
+        description: Present in only one genome
+      likelihood:
+        range: float
+        description: Log-likelihood from pangenome model
+
+  GeneGeneclusterJunction:
+    description: Many-to-many link between genes and gene clusters
+    annotations:
+      source_table: gene_genecluster_junction
+      row_count: "1011650762"
+    attributes:
+      gene_id:
+        range: Gene
+      gene_cluster_id:
+        range: GeneCluster
+
+  Pangenome:
+    description: Summary statistics for a species pangenome
+    annotations:
+      source_table: pangenome
+    attributes:
+      gtdb_species_clade_id:
+        identifier: true
+        range: GtdbSpeciesClade
+      protocol_id:
+        description: Analysis protocol version
+      number_of_iterations:
+        range: integer
+      mean_initial_completeness:
+        range: float
+      total_sum_of_loglikelihood_ratios:
+        range: float
+      corrected_mean_completness:
+        range: float
+      no_aux_genome:
+        range: integer
+        description: Number of auxiliary gene clusters
+      no_core:
+        range: integer
+        description: Number of core gene clusters
+      no_singleton_gene_clusters:
+        range: integer
+      no_gene_clusters:
+        range: integer
+        description: Total gene clusters
+      no_genomes:
+        range: integer
+        description: Number of genomes in pangenome
+
+  GtdbTaxonomyR214v1:
+    description: GTDB r214 taxonomy with full lineage
+    annotations:
+      source_table: gtdb_taxonomy_r214v1
+    attributes:
+      genome_id:
+        range: Genome
+      gtdb_taxonomy_id:
+        identifier: true
+      domain:
+      phylum:
+      class:
+      order:
+      family:
+      genus:
+      species:
+
+  GtdbMetadata:
+    description: Comprehensive GTDB metadata (114 columns)
+    annotations:
+      source_table: gtdb_metadata
+    attributes:
+      accession:
+        identifier: true
+      checkm_completeness:
+        range: float
+      checkm_contamination:
+        range: float
+      genome_size:
+        range: integer
+      gc_percentage:
+        range: float
+      contig_count:
+        range: integer
+      protein_count:
+        range: integer
+      gtdb_taxonomy:
+      gtdb_representative:
+        range: boolean
+      ncbi_organism_name:
+      ncbi_biosample:
+      ncbi_taxid:
+        range: integer
+
+  Sample:
+    description: NCBI BioProject/BioSample links
+    annotations:
+      source_table: sample
+    attributes:
+      genome_id:
+        range: Genome
+      ncbi_bioproject_accession_id:
+      ncbi_biosample_accession_id:
+
+  GenomeAni:
+    description: Pairwise ANI between genomes
+    annotations:
+      source_table: genome_ani
+    attributes:
+      genome1_id:
+        range: Genome
+      genome2_id:
+        range: Genome
+      protocol_id:
+      ANI:
+        range: float
+      AF:
+        range: float
+
+  EggnogMapperAnnotations:
+    description: EggNOG functional annotations (sparse - 9% coverage)
+    annotations:
+      source_table: eggnog_mapper_annotations
+      row_count: "93558330"
+    attributes:
+      query_name:
+        identifier: true
+        description: Gene ID (matches gene.gene_id)
+      seed_ortholog:
+      evalue:
+        range: float
+      score:
+        range: float
+      eggNOG_OGs:
+        description: EggNOG ortholog groups
+      COG_category:
+      Description:
+      Preferred_name:
+        description: Gene symbol when available
+      GOs:
+        description: GO term annotations
+      EC:
+        description: EC enzyme numbers
+      KEGG_ko:
+      KEGG_Pathway:
+      PFAMs:
+
+  GapmindPathways:
+    description: GapMind metabolic pathway completeness
+    annotations:
+      source_table: gapmind_pathways
+    attributes:
+      genome_id:
+        range: Genome
+      pathway:
+      metabolic_category:
+      score:
+        range: float
+      score_category:

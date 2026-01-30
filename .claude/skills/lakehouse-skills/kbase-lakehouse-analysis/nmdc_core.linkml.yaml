@@ -1,0 +1,381 @@
+id: https://w3id.org/kbase/nmdc_core
+name: nmdc_core
+title: NMDC Core Database
+description: >-
+  National Microbiome Data Collaborative (NMDC) core data including samples,
+  studies, omics data, annotations, and embeddings. Contains data from GOLD,
+  metabolomics, metagenomics, and other microbiome sources.
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  nmdc: https://w3id.org/nmdc/
+  GO: http://purl.obolibrary.org/obo/GO_
+  KEGG: https://www.genome.jp/kegg/
+  EC: https://enzyme.expasy.org/EC/
+  COG: https://www.ncbi.nlm.nih.gov/research/cog/
+
+default_range: string
+imports:
+  - linkml:types
+
+classes:
+  # Core Ontology/Annotation Tables
+  AnnotationTermsUnified:
+    description: Unified annotation terms across sources (GO, KEGG, EC, COG, etc.)
+    annotations:
+      source_table: annotation_terms_unified
+    attributes:
+      source:
+        description: Source ontology/database (GO, KEGG, EC, etc.)
+      term_id:
+        identifier: true
+        description: Term identifier
+      name:
+        description: Term name
+      description:
+        description: Term description
+      namespace:
+        description: Ontology namespace
+      is_obsolete:
+        range: boolean
+
+  GoTerms:
+    description: Gene Ontology terms
+    annotations:
+      source_table: go_terms
+    attributes:
+      go_id:
+        identifier: true
+        description: GO term ID (e.g., GO:0008150)
+      name:
+        description: Term name
+      namespace:
+        description: GO namespace (BP, MF, CC)
+      definition:
+        description: Term definition
+      synonyms:
+        description: Term synonyms
+      is_obsolete:
+        range: boolean
+
+  GoHierarchyFlat:
+    description: Flattened GO hierarchy for efficient querying
+    annotations:
+      source_table: go_hierarchy_flat
+    attributes:
+      ancestor_id:
+        description: Ancestor GO term
+      descendant_id:
+        description: Descendant GO term
+      distance:
+        range: integer
+        description: Path distance
+
+  EcTerms:
+    description: Enzyme Commission (EC) number terms
+    annotations:
+      source_table: ec_terms
+    attributes:
+      ec_id:
+        identifier: true
+      name:
+      description:
+
+  KeggKoTerms:
+    description: KEGG Orthology (KO) terms
+    annotations:
+      source_table: kegg_ko_terms
+    attributes:
+      ko_id:
+        identifier: true
+      name:
+      definition:
+
+  KeggPathwayTerms:
+    description: KEGG pathway definitions
+    annotations:
+      source_table: kegg_pathway_terms
+    attributes:
+      pathway_id:
+        identifier: true
+      name:
+      category:
+
+  CogCategories:
+    description: COG functional categories
+    annotations:
+      source_table: cog_categories
+    attributes:
+      category_id:
+        identifier: true
+      name:
+      description:
+
+  # Study and Sample Tables
+  StudyTable:
+    description: NMDC research studies
+    annotations:
+      source_table: study_table
+    attributes:
+      study_id:
+        identifier: true
+        description: NMDC study identifier
+      name:
+        description: Study name
+      description:
+        description: Study description
+      ecosystem:
+        description: Ecosystem type
+      ecosystem_category:
+      ecosystem_type:
+      ecosystem_subtype:
+      specific_ecosystem:
+      principal_investigator_name:
+      principal_investigator_orcid:
+      title:
+      study_category:
+      funding_sources:
+      gold_study_identifiers:
+      associated_dois:
+      websites:
+
+  TaxonomyDim:
+    description: Taxonomic hierarchy dimension table
+    annotations:
+      source_table: taxonomy_dim
+    attributes:
+      taxid:
+        identifier: true
+        range: integer
+        description: NCBI taxonomy ID
+      kingdom:
+      phylum:
+      class:
+      order:
+      family:
+      genus:
+      species:
+
+  # Omics Data Tables
+  MetabolomicsGold:
+    description: Metabolomics data linked to GOLD
+    annotations:
+      source_table: metabolomics_gold
+    attributes:
+      file_id:
+        description: Source file ID
+      file_name:
+      feature_id:
+        description: Metabolite feature ID
+      name:
+        description: Compound name
+      m/z:
+        range: float
+        description: Mass-to-charge ratio
+      Retention Time (min):
+        range: float
+      Intensity:
+        range: float
+      Molecular Formula:
+      inchi:
+      inchikey:
+      smiles:
+      kegg:
+        description: KEGG compound ID
+      chebi:
+        description: ChEBI compound ID
+
+  MetatranscriptomicsGold:
+    description: Metatranscriptomics data linked to GOLD
+    annotations:
+      source_table: metatranscriptomics_gold
+
+  LipidomicsGold:
+    description: Lipidomics data linked to GOLD
+    annotations:
+      source_table: lipidomics_gold
+
+  ProteomicsGold:
+    description: Proteomics data linked to GOLD
+    annotations:
+      source_table: proteomics_gold
+
+  # Taxonomy/Classification Tables
+  CentrifugeGold:
+    description: Centrifuge taxonomic classifications for GOLD samples
+    annotations:
+      source_table: centrifuge_gold
+
+  GottchaGold:
+    description: GOTTCHA taxonomic classifications for GOLD samples
+    annotations:
+      source_table: gottcha_gold
+
+  KrakenGold:
+    description: Kraken taxonomic classifications for GOLD samples
+    annotations:
+      source_table: kraken_gold
+
+  ContigTaxonomy:
+    description: Contig-level taxonomic assignments
+    annotations:
+      source_table: contig_taxonomy
+
+  # Embedding Tables
+  EmbeddingsV1:
+    description: Vector embeddings version 1
+    annotations:
+      source_table: embeddings_v1
+    attributes:
+      entity_id:
+        description: Entity being embedded
+      embedding:
+        description: Vector embedding
+      model_id:
+        description: Embedding model used
+
+  TaxonomyEmbeddings:
+    description: Taxonomic embeddings
+    annotations:
+      source_table: taxonomy_embeddings
+
+  TraitEmbeddings:
+    description: Trait-based embeddings
+    annotations:
+      source_table: trait_embeddings
+
+  AbioticEmbeddings:
+    description: Abiotic factor embeddings
+    annotations:
+      source_table: abiotic_embeddings
+
+  BiochemicalEmbeddings:
+    description: Biochemical feature embeddings
+    annotations:
+      source_table: biochemical_embeddings
+
+  UnifiedEmbeddings:
+    description: Unified multi-modal embeddings
+    annotations:
+      source_table: unified_embeddings
+
+  # Vocabulary and Tokenization
+  VocabRegistryV1:
+    description: Vocabulary registry for tokenization
+    annotations:
+      source_table: vocab_registry_v1
+
+  SampleTokensV1:
+    description: Sample-level token assignments
+    annotations:
+      source_table: sample_tokens_v1
+    attributes:
+      sample_id:
+        description: Sample identifier
+      token_id:
+        range: integer
+        description: Vocabulary token ID
+      modality_id:
+        description: Data modality
+      value:
+        range: float
+
+  # Feature Tables
+  TaxonomyFeatures:
+    description: Taxonomy-derived features
+    annotations:
+      source_table: taxonomy_features
+
+  TraitFeatures:
+    description: Trait-derived features
+    annotations:
+      source_table: trait_features
+
+  BiochemicalFeatures:
+    description: Biochemical features
+    annotations:
+      source_table: biochemical_features
+
+  AbioticFeatures:
+    description: Abiotic environmental features
+    annotations:
+      source_table: abiotic_features
+
+  # Trait Tables
+  TraitUnified:
+    description: Unified trait annotations
+    annotations:
+      source_table: trait_unified
+
+  TraitSources:
+    description: Sources for trait data
+    annotations:
+      source_table: trait_sources
+
+  TraitTaxonomyMapping:
+    description: Mapping between traits and taxonomy
+    annotations:
+      source_table: trait_taxonomy_mapping
+
+  # File/Sample Management
+  OmicsFilesTable:
+    description: Omics data file inventory
+    annotations:
+      source_table: omics_files_table
+
+  SampleFileLookup:
+    description: Sample to file mapping
+    annotations:
+      source_table: sample_file_lookup
+
+  SampleFileSelections:
+    description: User file selections per sample
+    annotations:
+      source_table: sample_file_selections
+
+  # Cross-references and Hierarchies
+  AnnotationCrossrefs:
+    description: Cross-references between annotation databases
+    annotations:
+      source_table: annotation_crossrefs
+
+  AnnotationHierarchiesUnified:
+    description: Unified annotation hierarchies
+    annotations:
+      source_table: annotation_hierarchies_unified
+
+  RheaReactions:
+    description: Rhea biochemical reactions
+    annotations:
+      source_table: rhea_reactions
+
+  RheaCrossrefs:
+    description: Rhea cross-references
+    annotations:
+      source_table: rhea_crossrefs
+
+  MetacycPathways:
+    description: MetaCyc metabolic pathways
+    annotations:
+      source_table: metacyc_pathways
+
+  MetacycPathwayReactions:
+    description: Reactions within MetaCyc pathways
+    annotations:
+      source_table: metacyc_pathway_reactions
+
+  # NOM (Natural Organic Matter)
+  NomGold:
+    description: Natural organic matter data linked to GOLD
+    annotations:
+      source_table: nom_gold
+
+  NomFeatureMetadata:
+    description: NOM feature metadata
+    annotations:
+      source_table: nom_feature_metadata
+
+  NomMatrixOptimized:
+    description: Optimized NOM feature matrix
+    annotations:
+      source_table: nom_matrix_optimized

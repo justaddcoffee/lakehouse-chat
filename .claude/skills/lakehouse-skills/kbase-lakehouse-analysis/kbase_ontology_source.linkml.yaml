@@ -1,0 +1,43 @@
+id: https://w3id.org/kbase/kbase_ontology_source
+name: kbase_ontology_source
+prefixes:
+  linkml: https://w3id.org/linkml/
+  kbase: https://w3id.org/kbase/kbase_ontology_source/
+default_range: string
+imports:
+- linkml:types
+classes:
+  EntailedEdge:
+    attributes:
+      subject:
+        range: string
+      predicate:
+        range: string
+      object:
+        range: string
+    annotations:
+      source_table: entailed_edge
+  Prefix:
+    attributes:
+      prefix:
+        range: string
+      base:
+        range: string
+    annotations:
+      source_table: prefix
+  Statements:
+    attributes:
+      subject:
+        range: string
+      predicate:
+        range: string
+      object:
+        range: string
+      value:
+        range: string
+      datatype:
+        range: string
+      language:
+        range: string
+    annotations:
+      source_table: statements

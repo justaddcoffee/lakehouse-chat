@@ -1,0 +1,79 @@
+id: https://w3id.org/kbase/kbase_refseq_taxon_api
+name: kbase_refseq_taxon_api
+prefixes:
+  linkml: https://w3id.org/linkml/
+  kbase: https://w3id.org/kbase/kbase_refseq_taxon_api/
+default_range: string
+imports:
+- linkml:types
+classes:
+  ContigCollection:
+    attributes:
+      collection_id:
+        range: string
+        identifier: false
+      contig_collection_type:
+        range: string
+      ncbi_taxon_id:
+        range: string
+        identifier: false
+      gtdb_taxon_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: contig_collection
+  Datasource:
+    attributes:
+      name:
+        range: string
+      source:
+        range: string
+      url:
+        range: string
+      accessed:
+        range: string
+      version:
+        range: string
+    annotations:
+      source_table: datasource
+  Entity:
+    attributes:
+      entity_id:
+        range: string
+        identifier: true
+      entity_type:
+        range: string
+      data_source:
+        range: string
+      created:
+        range: string
+      updated:
+        range: string
+    annotations:
+      source_table: entity
+  Identifier:
+    attributes:
+      entity_id:
+        range: string
+        identifier: false
+      identifier:
+        range: string
+      source:
+        range: string
+      description:
+        range: string
+    annotations:
+      source_table: identifier
+  Name:
+    attributes:
+      entity_id:
+        range: string
+        identifier: false
+      name:
+        range: string
+      description:
+        range: string
+      source:
+        range: string
+    annotations:
+      source_table: name

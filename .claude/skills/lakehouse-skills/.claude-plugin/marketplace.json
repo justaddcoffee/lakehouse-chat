@@ -1,0 +1,31 @@
+{
+  "name": "lakehouse-skills",
+  "owner": {
+    "name": "Chris Mungall",
+    "email": "cjmungall@lbl.gov"
+  },
+  "metadata": {
+    "description": "Skills for querying genomics data lakehouses (JGI, KBase/BERDL)",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "kbase-query",
+      "description": "Skills for querying the KBase/BERDL Datalake via the MCP REST API",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./kbase-query"
+      ]
+    },
+    {
+      "name": "jgi-lakehouse",
+      "description": "Skills for querying the JGI Dremio Lakehouse (GOLD, IMG databases)",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./jgi-lakehouse"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+id: https://w3id.org/kbase/kbase_phenotype
+name: kbase_phenotype
+prefixes:
+  linkml: https://w3id.org/linkml/
+  kbase: https://w3id.org/kbase/kbase_phenotype/
+default_range: string
+imports:
+- linkml:types
+classes:
+  Experiment:
+    attributes:
+      experiment_id:
+        range: string
+        identifier: true
+      name:
+        range: string
+      description:
+        range: string
+      protocol_id:
+        range: string
+        identifier: false
+      created_at:
+        range: string
+      contributor:
+        range: string
+    annotations:
+      source_table: experiment
+  ExperimentalVariable:
+    attributes:
+      variable_id:
+        range: string
+        identifier: false
+      name:
+        range: string
+      name_cv_id:
+        range: string
+        identifier: false
+      description:
+        range: string
+      value_type:
+        range: string
+      units:
+        range: string
+    annotations:
+      source_table: experimental_variable
+  ExperimentalContext:
+    attributes:
+      experiment_context_id:
+        range: string
+        identifier: false
+      experiment_id:
+        range: string
+        identifier: false
+      variable_id:
+        range: string
+        identifier: false
+      value:
+        range: string
+    annotations:
+      source_table: experimental_context
+  ConditionSet:
+    attributes:
+      condition_set_id:
+        range: string
+        identifier: true
+      experiment_condition_id:
+        range: string
+        identifier: false
+    annotations:
+      source_table: condition_set
+  ExperimentXMeasurement:
+    attributes:
+      experiment_id:
+        range: string
+        identifier: false
+      variable_id:
+        range: string
+        identifier: false
+      measurement_set_id:
+        range: string
+        identifier: false
+      quality:
+        range: string
+      timestamp:
+        range: string
+    annotations:
+      source_table: experiment_x_measurement
+  Measurement:
+    attributes:
+      measurement_id:
+        range: string
+        identifier: true
+      measurement_set_id:
+        range: string
+        identifier: false
+      condition_set_id:
+        range: string
+        identifier: false
+      value:
+        range: string
+    annotations:
+      source_table: measurement
+  Protocol:
+    attributes:
+      protocol_id:
+        range: string
+        identifier: true
+      name:
+        range: string
+      description:
+        range: string
+      steps:
+        range: string
+    annotations:
+      source_table: protocol

@@ -1,0 +1,85 @@
+id: https://w3id.org/kbase/kbase_uniref100
+name: kbase_uniref100
+title: UniRef100 Protein Clusters
+description: >-
+  UniRef100 clusters containing identical protein sequences from UniProt.
+  100% sequence identity clusters for protein deduplication.
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  kbase: https://w3id.org/kbase/uniref100/
+  UniProt: https://www.uniprot.org/
+
+default_range: string
+imports:
+  - linkml:types
+
+classes:
+  Cluster:
+    description: UniRef100 cluster of identical sequences
+    annotations:
+      source_table: cluster
+    attributes:
+      cluster_id:
+        identifier: true
+        description: UniRef100 cluster ID
+      name:
+        description: Representative sequence name
+      entity_type:
+        description: Entity type (protein)
+      description:
+        description: Cluster description
+      protocol_id:
+        description: Clustering protocol ID
+
+  ClusterMember:
+    description: Member sequence in a cluster
+    annotations:
+      source_table: clustermember
+    attributes:
+      cluster_id:
+        range: Cluster
+        description: Parent cluster
+      entity_id:
+        range: Entity
+        description: Member sequence
+      is_representative:
+        range: boolean
+        description: Whether this is the representative sequence
+      is_seed:
+        range: boolean
+        description: Whether this is the seed sequence
+      score:
+        range: float
+        description: Membership score
+
+  Crossreference:
+    description: Cross-references to external databases
+    annotations:
+      source_table: crossreference
+    attributes:
+      entity_id:
+        range: Entity
+      xref_type:
+        description: Cross-reference database type
+      xref_value:
+        description: External identifier value
+
+  Entity:
+    description: UniProt entity (protein sequence)
+    annotations:
+      source_table: entity
+    attributes:
+      entity_id:
+        identifier: true
+        description: Internal entity ID
+      data_source_entity_id:
+        description: Original UniProt ID
+      entity_type:
+        description: Entity type
+      data_source:
+        description: Source database
+      updated:
+        description: Last update timestamp
+      created:
+        description: Creation timestamp
