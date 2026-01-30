@@ -195,7 +195,7 @@ async def main_page():
 
     with ui.column().classes("w-full max-w-3xl mx-auto p-4"):
         ui.label("BERDL Chat").classes("text-2xl font-bold mb-2")
-        ui.label("Ask questions about NMDC microbiome data in plain English").classes("text-gray-500 mb-2")
+        ui.label("Ask questions about BERDL microbiome data in plain English").classes("text-gray-500 mb-2")
 
         # Connection status
         with ui.row().classes("items-center gap-2 mb-4"):
