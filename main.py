@@ -13,11 +13,11 @@ Environment variables required:
     ANTHROPIC_API_KEY - Anthropic API key for Claude
 """
 
+import asyncio
 import os
 import httpx
-import anthropic
 from dotenv import load_dotenv
-from nicegui import ui
+from nicegui import ui, run, background_tasks
 
 load_dotenv()
 
@@ -90,48 +90,93 @@ def query_berdl(sql: str) -> dict:
         return {"error": str(e)}
 
 
-def generate_sql(user_question: str) -> str:
-    """Use Claude to generate SQL from natural language question."""
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        return "-- Error: ANTHROPIC_API_KEY not set"
+def _run_claude_cli(prompt: str) -> str:
+    """Run Claude CLI synchronously (called from thread pool)."""
+    import subprocess
+    import re
 
-    client = anthropic.Anthropic(api_key=api_key)
+    env = os.environ.copy()
+    oauth_token = os.getenv("ANTHROPIC_API_KEY", "")
+    if oauth_token.startswith("sk-ant-oat"):
+        env["CLAUDE_CODE_OAUTH_TOKEN"] = oauth_token
+        env.pop("ANTHROPIC_API_KEY", None)
 
-    message = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=500,
-        system=SCHEMA_CONTEXT,
-        messages=[
-            {"role": "user", "content": f"Write a SQL query to answer: {user_question}"}
-        ],
-    )
+    try:
+        result = subprocess.run(
+            ["claude", "-p", "--output-format", "text", "--model", "sonnet", "--", prompt],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=env,
+        )
 
-    return message.content[0].text.strip()
+        if result.returncode != 0:
+            return f"-- Error: Claude CLI failed: {result.stderr[:200]}"
+
+        output = result.stdout.strip()
+
+        # Extract SQL from markdown code blocks if present
+        sql_match = re.search(r'```(?:sql)?\s*([\s\S]*?)```', output)
+        if sql_match:
+            return sql_match.group(1).strip()
+
+        # If output starts with SELECT/WITH/EXPLAIN etc, it's probably raw SQL
+        if output.upper().startswith(('SELECT', 'WITH', 'EXPLAIN', 'DESCRIBE', 'SHOW')):
+            return output
+
+        # Otherwise return as-is (might be an explanation for explain_results)
+        return output
+    except subprocess.TimeoutExpired:
+        return "-- Error: Claude CLI timed out"
+    except FileNotFoundError:
+        return "-- Error: Claude CLI not found"
+    except Exception as e:
+        return f"-- Error: {e}"
 
 
-def explain_results(question: str, sql: str, results: dict) -> str:
-    """Use Claude to explain query results in plain English."""
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        return "Error: ANTHROPIC_API_KEY not set"
+async def generate_sql(user_question: str, conversation_history: list = None, previous_sql: str = None, error: str = None) -> str:
+    """Use Claude CLI to generate SQL from natural language question."""
+    history_context = ""
+    if conversation_history:
+        history_parts = []
+        for entry in conversation_history[-5:]:  # Last 5 exchanges for context
+            history_parts.append(f"User: {entry['question']}")
+            history_parts.append(f"SQL: {entry['sql']}")
+            if entry.get('result_summary'):
+                history_parts.append(f"Result: {entry['result_summary']}")
+        history_context = "\n\nPrevious conversation:\n" + "\n".join(history_parts)
 
+    if previous_sql and error:
+        prompt = f"""{SCHEMA_CONTEXT}{history_context}
+
+The user asked: {user_question}
+
+I tried this SQL but it failed:
+{previous_sql}
+
+Error: {error}
+
+Fix the SQL query. Return ONLY the raw SQL, no explanation, no markdown code blocks."""
+    else:
+        prompt = f"""{SCHEMA_CONTEXT}{history_context}
+
+Write a SQL query to answer: {user_question}
+
+Return ONLY the raw SQL query, no explanation, no markdown code blocks, no backticks."""
+
+    return await run.io_bound(_run_claude_cli, prompt)
+
+
+async def explain_results(question: str, sql: str, results: dict) -> str:
+    """Use Claude CLI to explain query results in plain English."""
     if "error" in results:
         return f"**Query failed:** {results['error']}"
 
-    client = anthropic.Anthropic(api_key=api_key)
-
     result_data = results.get("result", [])
-    result_summary = str(result_data[:10])  # First 10 rows for context
+    result_summary = str(result_data[:10])
     total_rows = results.get("pagination", {}).get("total_count", len(result_data))
 
-    message = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=300,
-        messages=[
-            {
-                "role": "user",
-                "content": f"""The user asked: "{question}"
+    prompt = f"""The user asked: "{question}"
 
 I ran this SQL: {sql}
 
@@ -139,15 +184,14 @@ Results ({total_rows} rows total, showing first 10):
 {result_summary}
 
 Explain what we found in 2-3 sentences. Be specific about numbers and findings."""
-            }
-        ],
-    )
 
-    return message.content[0].text.strip()
+    return await run.io_bound(_run_claude_cli, prompt)
 
 
-def main():
-    """Main application entry point."""
+@ui.page('/')
+async def main_page():
+    """Main page with chat interface."""
+    import json
 
     with ui.column().classes("w-full max-w-3xl mx-auto p-4"):
         ui.label("BERDL Chat").classes("text-2xl font-bold mb-2")
@@ -158,8 +202,8 @@ def main():
             status_dot = ui.icon("circle").classes("text-yellow-500 text-xs")
             status_text = ui.label("Checking connection...").classes("text-sm text-gray-500")
 
-        def check_connection():
-            result = query_berdl("SELECT 1 as test")
+        async def check_connection():
+            result = await run.io_bound(query_berdl, "SELECT 1 as test")
             if "error" in result:
                 status_dot.classes("text-red-500", remove="text-yellow-500 text-green-500")
                 status_text.set_text(f"Disconnected: {result['error'][:50]}")
@@ -167,54 +211,111 @@ def main():
                 status_dot.classes("text-green-500", remove="text-yellow-500 text-red-500")
                 status_text.set_text("Connected to BERDL")
 
-        ui.timer(0.1, check_connection, once=True)
+        background_tasks.create(check_connection())
 
         # Chat message container
         chat_container = ui.column().classes("w-full space-y-4 mb-4")
 
-        def add_message(role: str, content: str, sql: str = None):
-            """Add a message to the chat."""
-            with chat_container:
-                with ui.card().classes("w-full"):
-                    if role == "user":
-                        ui.label(content).classes("font-medium")
-                    else:
-                        ui.markdown(content)
-                        if sql:
-                            with ui.expansion("Show SQL", icon="code").classes("w-full mt-2"):
-                                ui.code(sql, language="sql")
+        # Conversation history for context
+        conversation_history = []
 
-        def send_message():
+        # Input field (defined early so we can reference it)
+        with ui.row().classes("w-full"):
+            input_field = ui.input(placeholder="Ask about microbiome data...").classes("flex-grow")
+            send_button = ui.button("Send").classes("ml-2")
+
+        async def send_message():
             question = input_field.value
             if not question.strip():
                 return
 
             input_field.value = ""
-            add_message("user", question)
 
-            # Show loading
+            # Add user message
             with chat_container:
-                loading_card = ui.card().classes("w-full")
-                with loading_card:
-                    ui.spinner("dots")
-                    ui.label("Thinking...").classes("text-gray-500")
+                with ui.card().classes("w-full"):
+                    ui.label(question).classes("font-medium")
 
-            # Generate SQL
-            sql = generate_sql(question)
+            # Create progress card
+            with chat_container:
+                progress_card = ui.card().classes("w-full")
+                with progress_card:
+                    status_label = ui.label("Generating SQL...").classes("text-gray-500")
+                    spinner = ui.spinner("dots")
+                    sql_container = ui.column().classes("w-full")
+                    response_container = ui.column().classes("w-full")
+                    explanation_container = ui.column().classes("w-full")
 
-            # Execute query
-            results = query_berdl(sql)
+            # Generate SQL with retry logic
+            max_retries = 3
+            sql = None
+            results = None
+            previous_sql = None
+            error = None
+
+            for attempt in range(max_retries):
+                if attempt == 0:
+                    status_label.set_text("Generating SQL...")
+                else:
+                    status_label.set_text(f"Fixing SQL (attempt {attempt + 1}/{max_retries})...")
+
+                sql = await generate_sql(question, conversation_history, previous_sql, error)
+
+                # Clear and update SQL display
+                sql_container.clear()
+                with sql_container:
+                    with ui.expansion(f"Generated SQL (attempt {attempt + 1})", icon="code", value=True).classes("w-full mt-2"):
+                        ui.code(sql, language="sql")
+
+                status_label.set_text("Querying BERDL...")
+                results = await run.io_bound(query_berdl, sql)
+
+                # Check if query succeeded
+                if "error" not in results:
+                    break
+
+                # Query failed - prepare for retry
+                previous_sql = sql
+                error = results.get("error", "Unknown error")
+
+                # Show error in response container
+                response_container.clear()
+                with response_container:
+                    ui.label(f"Attempt {attempt + 1} failed: {error[:100]}...").classes("text-red-500 text-sm")
+
+            # Show final BERDL response
+            response_container.clear()
+            with response_container:
+                with ui.expansion("BERDL Response", icon="data_object", value=True).classes("w-full mt-2"):
+                    ui.code(json.dumps(results, indent=2), language="json")
+            status_label.set_text("Generating explanation...")
+
+            # Store in conversation history
+            result_data = results.get("result", [])
+            result_summary = f"{len(result_data)} rows returned"
+            if result_data and len(result_data) <= 5:
+                result_summary = str(result_data)
+            elif result_data:
+                result_summary = f"{len(result_data)} rows, first: {result_data[0]}"
+
+            conversation_history.append({
+                "question": question,
+                "sql": sql,
+                "result_summary": result_summary if "error" not in results else f"Error: {results['error'][:100]}"
+            })
 
             # Explain results
-            explanation = explain_results(question, sql, results)
+            explanation = await explain_results(question, sql, results)
 
-            # Remove loading, add response
-            chat_container.remove(loading_card)
-            add_message("assistant", explanation, sql)
+            # Show final explanation
+            spinner.delete()
+            status_label.delete()
+            with explanation_container:
+                ui.markdown(explanation)
 
-        def set_and_send(question: str):
+        async def set_and_send(question: str):
             input_field.value = question
-            send_message()
+            await send_message()
 
         # Example questions
         ui.label("Try these:").classes("text-sm text-gray-500 mt-2")
@@ -226,16 +327,11 @@ def main():
                 "Count studies by ecosystem type",
             ]
             for ex in examples:
-                ui.button(ex, on_click=lambda e=ex: set_and_send(e)).props("flat dense").classes("text-xs")
+                ui.button(ex, on_click=lambda e=ex: background_tasks.create(set_and_send(e))).props("flat dense").classes("text-xs")
 
-        # Input area
-        with ui.row().classes("w-full"):
-            input_field = ui.input(placeholder="Ask about microbiome data...").classes("flex-grow")
-            input_field.on("keydown.enter", send_message)
-            ui.button("Send", on_click=send_message).classes("ml-2")
-
-    ui.run(title="BERDL Chat", port=8081)
+        # Wire up input handlers
+        input_field.on("keydown.enter", lambda: background_tasks.create(send_message()))
+        send_button.on_click(lambda: background_tasks.create(send_message()))
 
 
-if __name__ == "__main__":
-    main()
+ui.run(title="BERDL Chat", port=8081)
