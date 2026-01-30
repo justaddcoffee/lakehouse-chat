@@ -225,8 +225,10 @@ async def main_page():
     import json
 
     with ui.column().classes("w-full max-w-3xl mx-auto p-4"):
-        ui.label("Lakehouse Chat").classes("text-2xl font-bold mb-2")
-        ui.label("Ask questions about the KBase/BERDL data lakehouse in plain English").classes("text-gray-500 mb-2")
+        with ui.row().classes("items-center gap-3 mb-2"):
+            ui.icon("warehouse", size="32px").classes("text-blue-600")
+            ui.label("Lakehouse Chat").classes("text-3xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent")
+        ui.label("Ask questions about the KBase/BERDL data lakehouse in plain English").classes("text-gray-500 italic").classes("text-gray-500 mb-2")
 
         # Connection status
         with ui.row().classes("items-center gap-2 mb-4"):
