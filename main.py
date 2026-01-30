@@ -15,77 +15,80 @@ Environment variables required:
 
 import asyncio
 import os
+from pathlib import Path
 import httpx
+import yaml
 from dotenv import load_dotenv
 from nicegui import ui, run, background_tasks
 
 load_dotenv()
 
 BERDL_API_URL = "https://hub.berdl.kbase.us/apis/mcp/delta/tables/query"
+SKILLS_PATH = Path(__file__).parent / ".claude" / "skills" / "lakehouse-skills" / "kbase-lakehouse-analysis"
 
-SCHEMA_CONTEXT = """You are a SQL assistant for the BERDL/KBase Data Lakehouse.
 
-## Available Databases
+def load_schema_context() -> str:
+    """Load schema context dynamically from lakehouse-skills LinkML files."""
+    schema_parts = [
+        "You are a SQL assistant for the BERDL/KBase Data Lakehouse.",
+        "",
+        "## Available Databases and Tables",
+        "",
+    ]
 
-Key databases include:
-- `nmdc_core` - NMDC microbiome data (traits, taxonomy, studies)
-- `kbase_ke_pangenome` - Pangenomic data with GTDB taxonomy (genome, gene, gene_cluster)
-- `kbase_genomes` - KBase genome collection
-- `kbase_uniprot_*` - UniProt reference data
+    if not SKILLS_PATH.exists():
+        schema_parts.append("(Schema files not found - using basic mode)")
+        return "\n".join(schema_parts)
 
-## nmdc_core Tables
+    # Load all LinkML YAML files
+    for yaml_file in sorted(SKILLS_PATH.glob("*.linkml.yaml")):
+        try:
+            with open(yaml_file) as f:
+                schema = yaml.safe_load(f)
 
-1. trait_features - Predicted microbial traits per sample
-   - sample_id (string)
-   - 90+ columns like: "functional_group:plastic_degradation", "functional_group:methanogenesis",
-     "functional_group:nitrogen_fixation", "functional_group:oil_bioremediation",
-     "functional_group:human_pathogens_all", "functional_group:cellulolysis", etc.
-   - Values are numeric (0 = absent, >0 = present/abundance)
+            db_name = schema.get("name", yaml_file.stem)
+            db_title = schema.get("title", db_name)
+            db_desc = schema.get("description", "")
 
-2. abiotic_features - Environmental measurements per sample
-   - sample_id, annotations_ph, annotations_temp_has_numeric_value,
-     annotations_depth_has_numeric_value, annotations_tot_org_carb_has_numeric_value, etc.
+            schema_parts.append(f"### {db_name}")
+            if db_desc:
+                schema_parts.append(f"{db_desc[:200]}...")
+            schema_parts.append("")
 
-3. taxonomy_dim - Taxonomy hierarchy (2.6M records)
-   - taxid, kingdom, phylum, class, order, family, genus, species
+            # Extract classes (tables)
+            classes = schema.get("classes", {})
+            for class_name, class_info in list(classes.items())[:10]:  # Limit to 10 tables per DB
+                if isinstance(class_info, dict):
+                    table_name = class_info.get("annotations", {}).get("source_table", class_name.lower())
+                    desc = class_info.get("description", "")[:100]
+                    attrs = class_info.get("attributes", {})
+                    cols = list(attrs.keys())[:8]  # First 8 columns
 
-4. study_table - Study metadata (48 studies)
-   - study_id, name, ecosystem, ecosystem_type, ecosystem_subtype
+                    schema_parts.append(f"- **{db_name}.{table_name}**: {desc}")
+                    if cols:
+                        schema_parts.append(f"  Columns: {', '.join(cols)}")
 
-5. cog_categories - COG functional categories
-   - cog_id, category_code, category_name, description
+            schema_parts.append("")
 
-## kbase_ke_pangenome Tables
+        except Exception as e:
+            schema_parts.append(f"(Error loading {yaml_file.name}: {e})")
 
-- genome - genome_id, gtdb_species_clade_id, and other genome metadata
-- gene - gene information
-- gene_cluster - gene cluster data
+    # Add SQL rules
+    schema_parts.extend([
+        "## SQL Rules",
+        "",
+        "- Always use fully qualified table names: database.table_name",
+        "- Columns with special characters need double quotes: \"column:name\"",
+        "- Keep queries simple and limit results (LIMIT 20 unless user asks for more)",
+        "- Use standard SQL syntax (SELECT, JOIN, WHERE, GROUP BY, ORDER BY)",
+        "- Return ONLY the SQL query, no explanation, no markdown code blocks",
+    ])
 
-## SQL Rules
+    return "\n".join(schema_parts)
 
-- Always use fully qualified table names: database.table_name (e.g., nmdc_core.trait_features)
-- Columns with special characters need double quotes: "functional_group:plastic_degradation"
-- Keep queries simple and limit results (LIMIT 20 unless user asks for more)
-- Use standard SQL syntax (SELECT, JOIN, WHERE, GROUP BY, ORDER BY, etc.)
-- For aggregations, use COUNT(*), SUM(), AVG(), etc.
-- Return ONLY the SQL query, no explanation, no markdown code blocks
 
-## Example Queries
-
-```sql
--- Count samples with a trait
-SELECT COUNT(*) FROM nmdc_core.trait_features WHERE "functional_group:plastic_degradation" > 0
-
--- List kingdoms in taxonomy
-SELECT DISTINCT kingdom FROM nmdc_core.taxonomy_dim
-
--- Count studies by ecosystem
-SELECT ecosystem_type, COUNT(*) as count FROM nmdc_core.study_table GROUP BY ecosystem_type
-
--- Join example
-SELECT a.sample_id, b.name FROM nmdc_core.trait_features a JOIN nmdc_core.study_table b ON a.study_id = b.study_id
-```
-"""
+# Load schema context at startup
+SCHEMA_CONTEXT = load_schema_context()
 
 
 def query_berdl(sql: str) -> dict:
